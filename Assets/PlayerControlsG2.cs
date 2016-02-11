@@ -7,16 +7,20 @@ public enum ControlType
     Mid,
     Striker
 }
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerControlsG2 : MonoBehaviour
 {
 
     public ControlType controlType;
     Rigidbody rb;
-    float speed, yRotation;
+
+    float speed;
+    public float yRotation;
     Vector3 movement, vertical, horizontal;
     Transform tr;
     public Transform cam;
     float ySensivity = 5f;
+    [SerializeField]
     float inputSpeed;
     // Use this for initialization
     void Start()
@@ -24,6 +28,8 @@ public class PlayerControlsG2 : MonoBehaviour
         SetStats();
         rb = GetComponent<Rigidbody>();
         tr = GetComponent<Transform>();
+        Screen.lockCursor = true;
+
     }
 
     // Update is called once per frame
@@ -32,54 +38,22 @@ public class PlayerControlsG2 : MonoBehaviour
         
 
          MouseLook();
-        //Mid controls WIP
-
-        //speed seems ok for now at walk
-        if (Input.GetKey(KeyCode.LeftShift))
-        {
-            speed = (inputSpeed + 3f) * Time.deltaTime;
-        }
-        else
-        {
-            speed = inputSpeed * Time.deltaTime;
-        }
         
-
-        //Movment vector
-        movement = new Vector3(horizontal.x, 0f, vertical.z);
-
-        //Front and back walk vector
-        if (Input.GetAxis("Vertical") != 0f)
-        {
-            //  rb.AddForce(Vector3.forward * speed);
-            vertical = Vector3.forward * Input.GetAxis("Vertical");
-        }
-
-        //Strafe vector
-        if (Input.GetAxis("Horizontal") != 0f)
-        {
-            //  rb.AddForce(Vector3.forward * speed);
-            horizontal = Vector3.right * Input.GetAxis("Horizontal");
-        }
-
-        //movement applied to transform
-        tr.Translate(movement * speed);
-
-        if (Input.GetButtonDown("Jump"))
-        {
-            float y = tr.position.y - 0.7f;
-            Vector3 locPos = new Vector3(tr.position.x, y, tr.position.z);
-            rb.AddExplosionForce(750f, locPos, 1f);
-            Debug.Log("Jumping");
-        }
-
-        // Debug.Log(Input.GetAxis("Vertical"));
-        // Debug.Log("speed:" + speed);
-
+        PerformMove();
     }
+
+
+
+    void FixedUpdate()
+    {
+        
+    }
+
+
 
     void MouseLook()
     {
+        
         if (Input.GetAxisRaw("Mouse X") != 0f)
         {
             transform.Rotate(Vector3.up * ySensivity * Input.GetAxisRaw("Mouse X"));
@@ -99,20 +73,81 @@ public class PlayerControlsG2 : MonoBehaviour
         {
 
             case ControlType.Goalie:
-                inputSpeed = 3f;
+                inputSpeed = 10f;
                 break;
 
             case ControlType.Defender:
-                inputSpeed = 3f;
+                inputSpeed = 10f;
                 break;
 
             case ControlType.Mid:
-                inputSpeed = 3f;
+                inputSpeed = 10f;
                 break;
 
             case ControlType.Striker:
-                inputSpeed = 3f;
+                inputSpeed = 10f;
                 break;
         }
     }
-}
+
+
+    void PerformMove()
+    {
+        //Mid controls WIP
+
+        //speed seems ok for now at walk
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            speed = (inputSpeed + 5f);
+        }
+        else
+        {
+            speed = inputSpeed;
+        }
+
+
+        //Movment vector
+        //movement = new Vector3(horizontal.x, 0f, vertical.z);
+
+        //Front and back walk vector
+        if (Input.GetAxis("Vertical") != 0f)
+        {
+            //  rb.AddForce(Vector3.forward * speed);
+            vertical = transform.forward * Input.GetAxis("Vertical");
+        }
+
+        //Strafe vector
+        if (Input.GetAxis("Horizontal") != 0f)
+        {
+            //  rb.AddForce(Vector3.forward * speed);
+            horizontal = transform.right * Input.GetAxis("Horizontal");
+        }
+
+        //movement applied to transform
+        //tr.Translate(movement * speed);
+        movement = (vertical + horizontal).normalized * speed;
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            float y = tr.position.y - 0.7f;
+            Vector3 locPos = new Vector3(tr.position.x, y, tr.position.z);
+            rb.AddExplosionForce(750f, locPos, 1f);
+            Debug.Log("Jumping");
+        }
+
+        // Debug.Log(Input.GetAxis("Vertical"));
+        // Debug.Log("speed:" + speed);
+
+        if (movement != Vector3.zero)
+        {
+            //rb.MovePosition(rb.position + movement * speed * Time.fixedDeltaTime);
+            //tr.Translate(movement * Time.deltaTime);
+            tr.position = Vector3.Slerp(tr.position, (tr.position + movement), Time.deltaTime);
+        }
+    }
+
+
+
+
+
+}//end of .cs
